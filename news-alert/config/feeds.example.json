@@ -1,0 +1,15 @@
+{
+  "AI": [
+    "https://example.com/ai/rss",
+    "https://example.com/ai/feed"
+  ],
+  "주식": [
+    "https://example.com/stocks/rss"
+  ],
+  "육아": [
+    "https://example.com/parenting/rss"
+  ],
+  "게임": [
+    "https://example.com/games/rss"
+  ]
+}

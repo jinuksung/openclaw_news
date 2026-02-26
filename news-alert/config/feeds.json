@@ -1,0 +1,30 @@
+{
+  "AI": [
+    "https://openai.com/blog/rss.xml",
+    "https://www.anthropic.com/news/rss.xml",
+    "https://deepmind.google/blog/rss.xml",
+    "https://venturebeat.com/category/ai/feed/",
+    "https://www.marktechpost.com/feed/"
+  ],
+  "주식": [
+    "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+    "https://www.marketwatch.com/rss/topstories",
+    "https://www.investing.com/rss/news.rss",
+    "https://www.hankyung.com/feed/finance",
+    "https://www.mk.co.kr/rss/30000001/"
+  ],
+  "육아": [
+    "https://www.parents.com/feed/",
+    "https://www.verywellfamily.com/rss",
+    "https://www.babycenter.com/rss",
+    "https://www.momjunction.com/feed/",
+    "https://brunch.co.kr/rss/keyword/%EC%9C%A1%EC%95%84"
+  ],
+  "게임": [
+    "https://www.ign.com/rss",
+    "https://www.gamespot.com/feeds/news/",
+    "https://www.polygon.com/rss/index.xml",
+    "https://www.thisisgame.com/rss/news.xml",
+    "https://www.inven.co.kr/webzine/rss/news.xml"
+  ]
+}
