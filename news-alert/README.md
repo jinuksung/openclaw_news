@@ -40,6 +40,8 @@ SECTION_TOP_N=5
 TOTAL_TOP_N=20
 FEED_TIMEOUT_MS=10000
 FEED_RETRY_COUNT=1
+ARTICLE_FETCH_TIMEOUT_MS=10000
+ARTICLE_FETCH_RETRY_COUNT=1
 TELEGRAM_RETRY_COUNT=1
 ```
 
@@ -65,6 +67,7 @@ node dist/index.js
 - 피드별 실패 격리(try/catch), 타임아웃 10초, 재시도 1회
 - Telegram HTML ParseMode 사용, 메시지 4096자 초과 시 자동 분할 전송
 - Telegram 네트워크 실패 시 재시도 1회, 429 시 `Retry-After` 반영 후 1회 재시도
+- 선택된 기사 원문은 `data/articles/YYYY-MM-DD.jsonl`에 저장
 - 로그 파일: `logs/news-alert.log`
 
 ## 5) AI 요약(옵션)
@@ -88,7 +91,65 @@ node dist/index.js
 - 저장은 atomic write(임시파일 작성 후 rename)로 처리합니다.
 - 7일이 지난 항목은 자동 만료/정리됩니다.
 
+## 6-1) 기사 원문 아카이브 (`data/articles/YYYY-MM-DD.jsonl`)
+
+이번 실행에서 선택된 기사들은 날짜별 JSONL 파일에 저장됩니다.
+
+- 경로 예시: `data/articles/2026-02-28.jsonl`
+- 기사 1건당 1줄 JSON
+- 포함 필드:
+  - `section`
+  - `source`
+  - `title`
+  - `url`
+  - `publishedAtIso`
+  - `rssSummary`
+  - `content`
+  - `extractionMode`
+  - `fetchedAtIso`
+- 저장 정책:
+  - 같은 날짜 파일 안에서는 `url` 기준으로 덮어써 중복을 줄임
+  - 기사 본문 추출에 실패하면 RSS summary를 fallback으로 저장
+
 ## 7) 트러블슈팅
+
+## 7-1) 현재 피드 점검 메모
+
+2026-03-02 기준으로 `feeds.json`에 들어 있는 현재 피드들은 재검증 후 정리된 상태입니다.
+
+- summary 미지원 피드 제거:
+  - `https://www.hankyung.com/feed/finance`
+  - `https://www.hankyung.com/feed/all-news`
+- 응답 오류/파싱 실패 피드 제거:
+  - `https://www.reutersagency.com/feed/?best-topics=technology`
+  - `https://www.etnews.com/rss/etnews.xml`
+  - `https://it.donga.com/feeds/`
+  - `https://www.bloter.net/feed`
+  - `https://biz.chosun.com/rss/all.xml`
+  - `https://www.dt.co.kr/rss/all.xml`
+  - `https://www.mk.co.kr/rss/40000001/`
+- 대체 피드 반영:
+  - `https://techcrunch.com/category/artificial-intelligence/feed/`
+  - `https://it.donga.com/feeds/rss/news/`
+  - `https://www.aitimes.com/rss/allArticle.xml`
+  - `https://www.artificialintelligence-news.com/feed/`
+  - `https://www.newsis.com/RSS/economy.xml`
+  - `https://www.cnbc.com/id/100003114/device/rss/rss.html`
+  - `https://www.marketwatch.com/rss/topstories`
+  - `https://www.khan.co.kr/rss/rssdata/total_news.xml`
+  - `https://www.hani.co.kr/rss/`
+- 기사 원문 접근 제한으로 교체된 피드:
+  - `https://openai.com/blog/rss.xml` -> 기사 페이지 `403`
+  - `https://venturebeat.com/category/ai/feed/` -> 기사 페이지 `429`
+  - `https://www.marketwatch.com/rss/topstories` -> 기사 페이지 `401`
+  - `https://www.gamespot.com/feeds/news/` -> 기사 페이지 `403`
+- 원문 추출 가능한 대체 피드 반영:
+  - `https://www.theverge.com/rss/ai-artificial-intelligence/index.xml`
+  - `https://www.infoq.com/feed/ai-ml-data-eng/`
+  - `https://www.cnbc.com/id/10000664/device/rss/rss.html`
+  - `https://www.pcgamer.com/rss/`
+
+이 프로젝트는 RSS의 `description`, `summary`, `content:encoded` 중 하나라도 있으면 summary가 있는 피드로 간주하며, 현재 `feeds.json` 기준으로는 기사 원문 추출도 가능한 소스만 남겨 두었습니다.
 
 ### RSS 파싱 실패
 - 일부 피드가 실패해도 전체 실행은 계속됩니다.

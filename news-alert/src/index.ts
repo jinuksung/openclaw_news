@@ -1,6 +1,7 @@
 import { config as loadDotEnv } from 'dotenv';
 import { resolve } from 'node:path';
 
+import { archiveArticles } from './archive/archiveArticles';
 import { composeMessages } from './compose/composeMessage';
 import { loadFeeds } from './config/loadFeeds';
 import { fetchFeeds } from './rss/fetchFeeds';
@@ -20,6 +21,8 @@ const DEFAULT_SECTION_TOP_N = 5;
 const DEFAULT_TOTAL_TOP_N = 20;
 const DEFAULT_FEED_TIMEOUT_MS = 10_000;
 const DEFAULT_FEED_RETRY_COUNT = 1;
+const DEFAULT_ARTICLE_FETCH_TIMEOUT_MS = 10_000;
+const DEFAULT_ARTICLE_FETCH_RETRY_COUNT = 1;
 const DEFAULT_TELEGRAM_RETRY_COUNT = 1;
 const DEFAULT_SUMMARY_TOTAL_TOP_K = 8;
 const DEFAULT_SUMMARY_PER_SECTION_TOP_K = 3;
@@ -35,6 +38,14 @@ async function runOnce(): Promise<void> {
   const totalTopN = parsePositiveInt(process.env.TOTAL_TOP_N, DEFAULT_TOTAL_TOP_N);
   const feedTimeoutMs = parsePositiveInt(process.env.FEED_TIMEOUT_MS, DEFAULT_FEED_TIMEOUT_MS);
   const feedRetryCount = parseNonNegativeInt(process.env.FEED_RETRY_COUNT, DEFAULT_FEED_RETRY_COUNT);
+  const articleFetchTimeoutMs = parsePositiveInt(
+    process.env.ARTICLE_FETCH_TIMEOUT_MS,
+    DEFAULT_ARTICLE_FETCH_TIMEOUT_MS
+  );
+  const articleFetchRetryCount = parseNonNegativeInt(
+    process.env.ARTICLE_FETCH_RETRY_COUNT,
+    DEFAULT_ARTICLE_FETCH_RETRY_COUNT
+  );
   const telegramRetryCount = parseNonNegativeInt(
     process.env.TELEGRAM_RETRY_COUNT,
     DEFAULT_TELEGRAM_RETRY_COUNT
@@ -60,6 +71,17 @@ async function runOnce(): Promise<void> {
     logger.info('No new items to send.');
     return;
   }
+
+  const selectedItems = flattenSelectedItems(feedResult.sectionItems, feedResult.sectionOrder);
+  await archiveArticles({
+    baseDir: process.cwd(),
+    dateKst,
+    items: selectedItems,
+    now,
+    timeoutMs: articleFetchTimeoutMs,
+    retryCount: articleFetchRetryCount,
+    logger
+  });
 
   const summary = await maybeSummarize({
     dateKst,
@@ -92,6 +114,13 @@ async function runOnce(): Promise<void> {
     chunks: messageChunks.length,
     failedFeeds: feedResult.failedFeedCount
   });
+}
+
+function flattenSelectedItems(
+  sectionItems: Record<string, NormalizedNewsItem[]>,
+  sectionOrder: string[]
+): NormalizedNewsItem[] {
+  return sectionOrder.flatMap((section) => sectionItems[section] ?? []);
 }
 
 async function maybeSummarize(input: {

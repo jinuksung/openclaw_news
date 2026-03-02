@@ -1,30 +1,29 @@
 {
   "AI": [
-    "https://openai.com/blog/rss.xml",
-    "https://www.anthropic.com/news/rss.xml",
+    "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml",
     "https://deepmind.google/blog/rss.xml",
-    "https://venturebeat.com/category/ai/feed/",
-    "https://www.marktechpost.com/feed/"
+    "https://www.infoq.com/feed/ai-ml-data-eng/",
+    "https://www.marktechpost.com/feed/",
+    "https://techcrunch.com/category/artificial-intelligence/feed/",
+    "https://it.donga.com/feeds/rss/news/",
+    "https://www.aitimes.com/rss/allArticle.xml",
+    "https://www.artificialintelligence-news.com/feed/"
   ],
   "주식": [
+    "https://www.mk.co.kr/rss/30000001/",
+    "https://www.yna.co.kr/rss/economy.xml",
+    "https://www.newsis.com/RSS/economy.xml",
     "https://www.cnbc.com/id/100003114/device/rss/rss.html",
-    "https://www.marketwatch.com/rss/topstories",
-    "https://www.investing.com/rss/news.rss",
-    "https://www.hankyung.com/feed/finance",
-    "https://www.mk.co.kr/rss/30000001/"
-  ],
-  "육아": [
-    "https://www.parents.com/feed/",
-    "https://www.verywellfamily.com/rss",
-    "https://www.babycenter.com/rss",
-    "https://www.momjunction.com/feed/",
-    "https://brunch.co.kr/rss/keyword/%EC%9C%A1%EC%95%84"
+    "https://www.cnbc.com/id/10000664/device/rss/rss.html"
   ],
   "게임": [
-    "https://www.ign.com/rss",
-    "https://www.gamespot.com/feeds/news/",
+    "https://www.pcgamer.com/rss/",
     "https://www.polygon.com/rss/index.xml",
-    "https://www.thisisgame.com/rss/news.xml",
-    "https://www.inven.co.kr/webzine/rss/news.xml"
+    "https://feeds.ign.com/ign/all"
+  ],
+  "국내종합": [
+    "https://www.yna.co.kr/rss/industry.xml",
+    "https://www.khan.co.kr/rss/rssdata/total_news.xml",
+    "https://www.hani.co.kr/rss/"
   ]
 }
