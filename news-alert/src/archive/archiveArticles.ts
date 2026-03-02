@@ -61,8 +61,22 @@ export async function archiveArticles(input: ArchiveArticlesInput): Promise<Arch
       const extracted = extractArticleContent({
         url: item.url,
         html,
-        fallbackText: item.summary
+        fallbackText: item.summary,
+        onWarning: (warning) => {
+          input.logger.warn('Article extraction warning.', {
+            url: item.url,
+            reason: warning.message
+          });
+        }
       });
+
+      if (extracted.extractionMode === 'empty') {
+        input.logger.warn('Article extraction produced empty content.', {
+          section: item.section,
+          source: item.source,
+          url: item.url
+        });
+      }
 
       records.push({
         section: item.section,
@@ -97,7 +111,8 @@ export async function archiveArticles(input: ArchiveArticlesInput): Promise<Arch
   await writeJsonlArchive(archivePath, records);
   input.logger.info('Archived article records.', {
     path: archivePath,
-    count: records.length
+    count: records.length,
+    extractionModes: countExtractionModes(records)
   });
 
   return records;
@@ -203,4 +218,16 @@ async function loadExistingRecords(filePath: string): Promise<ArchivedArticleRec
 
 function isErrnoException(error: unknown): error is NodeJS.ErrnoException {
   return typeof error === 'object' && error !== null && 'code' in error;
+}
+
+function countExtractionModes(
+  records: ArchivedArticleRecord[]
+): Partial<Record<ExtractArticleContentResult['extractionMode'], number>> {
+  const counts: Partial<Record<ExtractArticleContentResult['extractionMode'], number>> = {};
+
+  for (const record of records) {
+    counts[record.extractionMode] = (counts[record.extractionMode] ?? 0) + 1;
+  }
+
+  return counts;
 }
