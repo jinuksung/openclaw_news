@@ -26,6 +26,7 @@
 `.env.example`를 복사해 `.env`를 만드세요.
 
 ```bash
+ENABLE_TELEGRAM=true
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 TELEGRAM_CHAT_ID=your_chat_id
 
@@ -44,6 +45,8 @@ ARTICLE_FETCH_TIMEOUT_MS=10000
 ARTICLE_FETCH_RETRY_COUNT=1
 TELEGRAM_RETRY_COUNT=1
 ```
+
+- `ENABLE_TELEGRAM=false`면 `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` 없이도 실행됩니다.
 
 ## 3) 실행 방법
 
@@ -69,6 +72,7 @@ node dist/index.js
 - Telegram 네트워크 실패 시 재시도 1회, 429 시 `Retry-After` 반영 후 1회 재시도
 - 선택된 기사 원문은 `data/articles/YYYY-MM-DD.jsonl`에 저장
 - 로그 파일: `logs/news-alert.log`
+- `ENABLE_TELEGRAM=false`면 텔레그램 전송과 `data/sent.json` 갱신을 건너뛰고 기사 아카이브만 저장
 
 ## 5) AI 요약(옵션)
 

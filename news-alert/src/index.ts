@@ -4,12 +4,12 @@ import { resolve } from 'node:path';
 import { archiveArticles } from './archive/archiveArticles';
 import { composeMessages } from './compose/composeMessage';
 import { loadFeeds } from './config/loadFeeds';
+import { deliverNews, resolveTelegramDelivery } from './delivery/deliverNews';
 import { fetchFeeds } from './rss/fetchFeeds';
 import type { NormalizedNewsItem } from './rss/normalizeItem';
 import { OpenAISummarizer } from './summarize/openaiSummarizer';
 import type { SummaryResult } from './summarize/Summarizer';
-import { loadSentLinks, pruneExpiredSentLinks, recordSentLinks, saveSentLinks } from './store/sentStore';
-import { sendTelegramMessages } from './telegram/sendMessage';
+import { loadSentLinks } from './store/sentStore';
 import { createLogger, toErrorMessage } from './utils/logger';
 import { formatKstDate } from './utils/time';
 
@@ -31,9 +31,6 @@ async function runOnce(): Promise<void> {
   const dateKst = formatKstDate(new Date());
   logger.info('Run-once started.', { dateKst });
 
-  const telegramToken = requireEnv('TELEGRAM_BOT_TOKEN');
-  const telegramChatId = requireEnv('TELEGRAM_CHAT_ID');
-
   const sectionTopN = parsePositiveInt(process.env.SECTION_TOP_N, DEFAULT_SECTION_TOP_N);
   const totalTopN = parsePositiveInt(process.env.TOTAL_TOP_N, DEFAULT_TOTAL_TOP_N);
   const feedTimeoutMs = parsePositiveInt(process.env.FEED_TIMEOUT_MS, DEFAULT_FEED_TIMEOUT_MS);
@@ -50,6 +47,7 @@ async function runOnce(): Promise<void> {
     process.env.TELEGRAM_RETRY_COUNT,
     DEFAULT_TELEGRAM_RETRY_COUNT
   );
+  const telegramDelivery = resolveTelegramDelivery(process.env, telegramRetryCount);
 
   const sentStorePath = resolve(process.cwd(), 'data/sent.json');
   const now = new Date();
@@ -83,35 +81,40 @@ async function runOnce(): Promise<void> {
     logger
   });
 
-  const summary = await maybeSummarize({
-    dateKst,
-    sectionOrder: feedResult.sectionOrder,
-    sectionItems: feedResult.sectionItems
-  });
+  const sentUrls = collectUrls(feedResult.sectionItems, feedResult.sectionOrder);
+  let messageChunks: string[] = [];
 
-  const messageChunks = composeMessages({
-    dateKst,
-    sectionOrder: feedResult.sectionOrder,
-    sectionItems: feedResult.sectionItems,
-    summary
-  });
+  if (telegramDelivery.enabled) {
+    const summary = await maybeSummarize({
+      dateKst,
+      sectionOrder: feedResult.sectionOrder,
+      sectionItems: feedResult.sectionItems
+    });
 
-  await sendTelegramMessages({
-    token: telegramToken,
-    chatId: telegramChatId,
-    messages: messageChunks,
-    retryCount: telegramRetryCount,
+    messageChunks = composeMessages({
+      dateKst,
+      sectionOrder: feedResult.sectionOrder,
+      sectionItems: feedResult.sectionItems,
+      summary
+    });
+  }
+
+  sentLinks = await deliverNews({
+    delivery: telegramDelivery,
+    messageChunks,
+    sentLinks,
+    sentUrls,
+    sentStorePath,
+    now,
     logger
   });
 
-  const sentUrls = collectUrls(feedResult.sectionItems, feedResult.sectionOrder);
-  sentLinks = pruneExpiredSentLinks(recordSentLinks(sentLinks, sentUrls, now), now, 7);
-  await saveSentLinks(sentStorePath, sentLinks);
-
   logger.info('Run-once completed.', {
     sections: feedResult.sectionOrder.length,
-    sentItems: sentUrls.length,
+    selectedItems: sentUrls.length,
+    sentItems: telegramDelivery.enabled ? sentUrls.length : 0,
     chunks: messageChunks.length,
+    telegramEnabled: telegramDelivery.enabled,
     failedFeeds: feedResult.failedFeedCount
   });
 }
@@ -172,15 +175,6 @@ function collectUrls(
   }
 
   return urls;
-}
-
-function requireEnv(name: string): string {
-  const value = process.env[name]?.trim();
-  if (!value) {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
-
-  return value;
 }
 
 function parsePositiveInt(rawValue: string | undefined, fallback: number): number {
