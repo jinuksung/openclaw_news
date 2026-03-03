@@ -27,6 +27,7 @@
 
 ```bash
 ENABLE_TELEGRAM=true
+SKIP_TELEGRAM=false
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 TELEGRAM_CHAT_ID=your_chat_id
 
@@ -47,6 +48,7 @@ TELEGRAM_RETRY_COUNT=1
 ```
 
 - `ENABLE_TELEGRAM=false`면 `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` 없이도 실행됩니다.
+- `SKIP_TELEGRAM=true`도 같은 효과를 내며, `ENABLE_TELEGRAM=true`보다 우선합니다.
 
 ## 3) 실행 방법
 
@@ -62,6 +64,19 @@ npm run run-once
 node dist/index.js
 ```
 
+텔레그램 발송 없이 기사 아카이브만 만들려면:
+
+```bash
+npm run build
+npm run archive-only
+```
+
+또는:
+
+```bash
+SKIP_TELEGRAM=true npm run run-once
+```
+
 ## 4) 동작 요약
 
 - 섹션별 최신 글을 수집 후 발행일 내림차순 정렬
@@ -73,6 +88,7 @@ node dist/index.js
 - 선택된 기사 원문은 `data/articles/YYYY-MM-DD.jsonl`에 저장
 - 로그 파일: `logs/news-alert.log`
 - `ENABLE_TELEGRAM=false`면 텔레그램 전송과 `data/sent.json` 갱신을 건너뛰고 기사 아카이브만 저장
+- `SKIP_TELEGRAM=true`도 동일하게 동작하며, OpenClaw 같은 외부 발송 단계에 넘길 때 사용합니다.
 
 ## 5) AI 요약(옵션)
 
@@ -94,6 +110,8 @@ node dist/index.js
 - 같은 URL은 재발송하지 않습니다.
 - 저장은 atomic write(임시파일 작성 후 rename)로 처리합니다.
 - 7일이 지난 항목은 자동 만료/정리됩니다.
+- `archive-only` 또는 `SKIP_TELEGRAM=true` 실행에서는 `sent.json`을 갱신하지 않습니다.
+- 따라서 외부 발송기(OpenClaw 등)가 실제 전송 성공 후에만 `sent.json`을 갱신해야 합니다.
 
 ## 6-1) 기사 원문 아카이브 (`data/articles/YYYY-MM-DD.jsonl`)
 
@@ -176,3 +194,12 @@ node dist/index.js
 
 - 토큰/키는 코드에 하드코딩하지 마세요.
 - `.env`를 사용하고, 로그에 민감정보가 남지 않도록 마스킹 처리되어 있습니다.
+
+## 9) OpenClaw 연동
+
+- 추천 실행:
+  - `npm run build`
+  - `npm run archive-only`
+- 이 모드는 새 기사만 골라 `data/articles/YYYY-MM-DD.jsonl`에 저장하고, 텔레그램 발송과 `sent.json` 갱신은 하지 않습니다.
+- OpenClaw는 이 JSONL을 읽어 요약/번역 후 텔레그램으로 보내고, 성공한 링크만 `data/sent.json`에 기록하면 됩니다.
+- 복사용 프롬프트는 `docs/openclaw-prompt.md`를 참고하세요.

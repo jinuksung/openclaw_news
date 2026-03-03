@@ -9,6 +9,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "run-once": "node dist/index.js",
+    "archive-only": "node -e \"process.env.SKIP_TELEGRAM='true'; require('./dist/index.js')\"",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write .",

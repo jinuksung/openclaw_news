@@ -31,6 +31,13 @@ export function resolveTelegramDelivery(
   env: Record<string, string | undefined>,
   retryCount: number = 1
 ): TelegramDeliveryConfig {
+  const skipTelegram = parseBoolean(env.SKIP_TELEGRAM, false);
+  if (skipTelegram) {
+    return {
+      enabled: false
+    };
+  }
+
   const enabled = parseBoolean(env.ENABLE_TELEGRAM, true);
   if (!enabled) {
     return {

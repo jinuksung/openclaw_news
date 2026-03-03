@@ -17,6 +17,14 @@ describe('resolveTelegramDelivery', () => {
     expect(delivery.enabled).toBe(false);
   });
 
+  it('disables telegram without requiring bot credentials when SKIP_TELEGRAM=true', () => {
+    const delivery = resolveTelegramDelivery({
+      SKIP_TELEGRAM: 'true'
+    });
+
+    expect(delivery.enabled).toBe(false);
+  });
+
   it('requires bot credentials when telegram delivery stays enabled', () => {
     expect(() => resolveTelegramDelivery({})).toThrow('Missing required environment variable: TELEGRAM_BOT_TOKEN');
   });
